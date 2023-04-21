@@ -1,67 +1,78 @@
-import csv
 
 
-def calculate_points_exchange(home_team, away_team, home_points, away_points, neutral_site):
-    # Load rankings from CSV file
-    with open('rankings.csv', mode='r') as file:
-        reader = csv.reader(file)
-        rankings = {rows[0]: int(rows[1]) for rows in reader}
-    for row in reader:
-        rankings[row[0]] = int(row[1])
-
-    if home_team not in rankings:
-        rankings[home_team] = 70
-        with open('rankings.csv', mode='a') as file:
-            writer = csv.writer(file)
-            writer.writerow([home_team, rankings[home_team]])
-
-    if away_team not in rankings:
-        rankings[away_team] = 70
-        with open('rankings.csv', mode='a') as file:
-            writer = csv.writer(file)
-            writer.writerow([away_team, rankings[away_team]])
-
-    if home_team not in rankings or away_team not in rankings:
-        print('One or more teams not found in rankings.csv. Using default ranking of 70.')
-    # Set default rankings for new teams
-    home_rank = rankings.get(home_team, 70)
-    away_rank = rankings.get(away_team, 70)
-
-    # Modify pre-match ranking scores for home and away teams
-    home_score = home_rank + 3 if (not neutral_site) and (home_team == home_team) else home_rank
-    away_score = away_rank + 3 if (not neutral_site) and (away_team == home_team) else away_rank
-
-    # Calculate difference in pre-match ranking scores
-    score_diff = abs(home_score - away_score)
-
-    # Calculate points exchange based on match result
-    if home_points > away_points:
-        if score_diff >= 16:
-            points_exchange = min((10 + away_score - home_score) * 0.15, 3)
-        else:
-            points_exchange = min((10 + away_score - home_score) * 0.1, 2)
-        # Update rankings
-        rankings[home_team] += points_exchange
-        rankings[away_team] -= points_exchange
-    elif home_points < away_points:
-        if score_diff >= 16:
-            points_exchange = min((10 + home_score - away_score) * 0.15, 3)
-        else:
-            points_exchange = min((10 + home_score - away_score) * 0.1, 2)
-        # Update rankings
-        rankings[home_team] -= points_exchange
-        rankings[away_team] += points_exchange
+def calculate_points_exchange(home_team, away_team, home_ranking, away_ranking, home_points, away_points, neutral_site, date_time):
+    import csv
+    # Step 1
+    if neutral_site:
+        a = home_ranking
+        b = away_ranking
     else:
-        points_exchange = min(score_diff * 0.1, 1)
+        a = home_ranking + 3
+        b = away_ranking
 
-    # Update rankings for a tie
-    if home_points == away_points:
-        rankings[home_team] += points_exchange
-        rankings[away_team] += points_exchange
+    # Step 3
+    d = abs(b - a)
 
-    # Write updated rankings to CSV file
-    with open('rankings.csv', mode='w', newline='') as file:
+    # Step 4
+    if home_points > away_points + 15:
+        exchange = min((10 + b - a) * 0.15, 3)
+    elif home_points > away_points and home_points <= away_points + 15:
+        exchange = min((10 + b - a) * 0.1, 2)
+    elif home_points == away_points:
+        exchange = min(d * 0.1, 1)
+    elif home_points < away_points and home_points + 15 >= away_points:
+        exchange = min((10 + a - b) * 0.1, 2)
+    else:
+        exchange = min((10 + a - b) * 0.15, 3)
+
+    # Step 5 apply the points exchange
+    if home_points > away_points + 15:
+        new_home_ranking = home_ranking + exchange
+        new_away_ranking = away_ranking - exchange
+    elif home_points > away_points and home_points <= away_points + 15:
+        new_home_ranking = home_ranking + exchange
+        new_away_ranking = away_ranking - exchange
+    elif home_points == away_points:
+        if a > b:
+            new_home_ranking = home_ranking - exchange
+            new_away_ranking = away_ranking + exchange
+        else:
+            new_home_ranking = home_ranking + exchange
+            new_away_ranking = away_ranking - exchange
+    elif home_points < away_points and home_points + 15 >= away_points:
+        new_home_ranking = home_ranking - exchange
+        new_away_ranking = away_ranking + exchange
+    else:
+        new_home_ranking = home_ranking - exchange
+        new_away_ranking = away_ranking + exchange
+
+    with open('calculated_results.csv', mode='a', newline='') as file:
         writer = csv.writer(file)
-        writer.writerows([[team, rank] for team, rank in rankings.items()])
+        writer.writerow([home_team, away_team, home_points, away_points, exchange, new_home_ranking,
+                         new_away_ranking])
+    # Update the rankings
+    with open('rankings.csv', 'r') as file:
+        reader = csv.reader(file)
+        rows = list(reader)
 
-    return points_exchange
+    # Find the row for the home team
+    for row in rows:
+        if row[0] == home_team:
+            # Update the ranking for the home team
+            row[1] = str(new_home_ranking)
+
+    # Find the row for the away team
+    for row in rows:
+        if row[0] == away_team:
+            # Update the ranking for the away team
+            row[1] = str(new_away_ranking)
+
+    # Sort the rows by the team rankings in descending order
+    rows_sorted = sorted(rows, key=lambda row: float(row[1]), reverse=True)
+
+    # Write the sorted rows back to the CSV file
+    with open('rankings.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerows(rows_sorted)
+
+    return (new_home_ranking, new_away_ranking)
