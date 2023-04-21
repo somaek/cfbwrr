@@ -1,13 +1,37 @@
 
 
-def calculate_points_exchange(home_team, away_team, home_ranking, away_ranking, home_points, away_points, neutral_site, date_time):
+def calculate_points_exchange(season, season_type, start_date, neutral_site, home_team, home_points, away_team, away_points):
     import csv
+    team_found = False
+    with open('rankings.csv', 'r') as file:
+        reader = csv.reader(file)
+        rows = list(reader)
+    # Find the row for the home team
+    for row in rows:
+        if row[0] == home_team:
+            # get home_ranking
+            home_ranking = float(row[1])
+            team_found = True
+
+    if not team_found:
+        home_ranking = float(70)
+
+    # Find the row for the away team
+    team_found = False
+    for row in rows:
+        if row[0] == away_team:
+            # get home_ranking
+            away_ranking = float(row[1])
+            team_found = True
+    if not team_found:
+        away_ranking = float(70)
+
     # Step 1
     if neutral_site:
         a = home_ranking
         b = away_ranking
     else:
-        a = home_ranking + 3
+        a = float(home_ranking) + 3
         b = away_ranking
 
     # Step 3
@@ -48,24 +72,47 @@ def calculate_points_exchange(home_team, away_team, home_ranking, away_ranking, 
 
     with open('calculated_results.csv', mode='a', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow([home_team, away_team, home_points, away_points, exchange, new_home_ranking,
-                         new_away_ranking])
+        writer.writerow([season, season_type, start_date, neutral_site, home_team, home_points, away_team, away_points, new_home_ranking, new_away_ranking])
     # Update the rankings
+    # Find the row for the home team
     with open('rankings.csv', 'r') as file:
         reader = csv.reader(file)
-        rows = list(reader)
+        rows = [row for row in reader]
 
-    # Find the row for the home team
+    team_found = False
     for row in rows:
         if row[0] == home_team:
-            # Update the ranking for the home team
+            # Update the ranking for the away team
             row[1] = str(new_home_ranking)
+            team_found = True
+
+    if not team_found:
+        # Add a new row for the away team
+        rows.append([home_team, str(new_home_ranking)])
+
+    with open('rankings.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerows(rows)
 
     # Find the row for the away team
+    with open('rankings.csv', 'r') as file:
+        reader = csv.reader(file)
+        rows = [row for row in reader]
+
+    team_found = False
     for row in rows:
         if row[0] == away_team:
             # Update the ranking for the away team
             row[1] = str(new_away_ranking)
+            team_found = True
+
+    if not team_found:
+        # Add a new row for the away team
+        rows.append([away_team, str(new_away_ranking)])
+
+    with open('rankings.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerows(rows)
 
     # Sort the rows by the team rankings in descending order
     rows_sorted = sorted(rows, key=lambda row: float(row[1]), reverse=True)
