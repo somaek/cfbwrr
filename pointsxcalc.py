@@ -72,7 +72,7 @@ def calculate_points_exchange(season, season_type, start_date, neutral_site, hom
 
     with open('calculated_results.csv', mode='a', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow([season, season_type, start_date, neutral_site, home_team, home_points, away_team, away_points, new_home_ranking, new_away_ranking])
+        writer.writerow([season, season_type, start_date, neutral_site, home_team, home_points, away_team, away_points, exchange, new_home_ranking, new_away_ranking])
     # Update the rankings
     # Find the row for the home team
     with open('rankings.csv', 'r') as file:
@@ -122,4 +122,3 @@ def calculate_points_exchange(season, season_type, start_date, neutral_site, hom
         writer = csv.writer(file)
         writer.writerows(rows_sorted)
 
-    return (new_home_ranking, new_away_ranking)
