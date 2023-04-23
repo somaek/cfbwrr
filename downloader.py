@@ -58,4 +58,11 @@ df = pd.read_csv(csv_filename)
 df = df.sort_values('start_date')
 df.to_csv(csv_filename, index=False)
 
+# Remove the header row from the CSV file
+with open(csv_filename, mode='r') as csvfile:
+    rows = csvfile.readlines()
+with open(csv_filename, mode='w', newline='') as csvfile:
+    csvfile.write(''.join(rows[1:]))
+
+
 print("Done!")

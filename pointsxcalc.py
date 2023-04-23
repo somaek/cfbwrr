@@ -1,6 +1,13 @@
 
 
 def calculate_points_exchange(season, season_type, start_date, neutral_site, home_team, home_points, away_team, away_points):
+    home_points = int(home_points)
+    away_points = int(away_points)
+    if neutral_site == "False":
+        neutral_site = False
+    else:
+        neutral_site = True
+
     import csv
     team_found = False
     with open('rankings.csv', 'r') as file:
@@ -69,10 +76,18 @@ def calculate_points_exchange(season, season_type, start_date, neutral_site, hom
     else:
         new_home_ranking = home_ranking - exchange
         new_away_ranking = away_ranking + exchange
-
+    if neutral_site:
+        location = "neutral"
+    else:
+        location = str("@" + home_team)
     with open('calculated_results.csv', mode='a', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow([season, season_type, start_date, neutral_site, home_team, home_points, away_team, away_points, exchange, new_home_ranking, new_away_ranking])
+        writer.writerow([season, season_type, start_date,location, home_team, str(home_points) + "-" + str(away_points),
+                         away_team, exchange, new_home_ranking])
+    with open('calculated_results.csv', mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([season, season_type, start_date, location, away_team, str(away_points) + "-" + str(home_points),
+                         home_team, exchange, new_away_ranking])
     # Update the rankings
     # Find the row for the home team
     with open('rankings.csv', 'r') as file:
