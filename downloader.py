@@ -13,7 +13,7 @@ API_KEY = "qOlAwqVbEVaTjxWqigYKgjGefmcfYU5RFSl8/uIlmEcfVDsDSvvdKvBQQbJDij9H"
 
 # Set the seasonType and division parameters
 SEASON_TYPE = "both"
-DIVISION = "FBS"
+DIVISION = ""
 
 # Set the output file names
 csv_filename = f"cfbresults.csv"
